@@ -1,133 +1,113 @@
 # Architecture
 
-No application stack is selected yet.
+Stack is locked in `docs/decisions/0009-web-stack.md`:
+**Next.js (App Router) + TypeScript (strict) + pnpm**, tests with
+Vitest + Playwright.
 
-No application code exists yet. This document defines generic architecture
-questions and boundary rules that future implementation should adapt after a
-user-provided spec and stack decision exist.
+The app is **not scaffolded yet**. Create real folders and run `create-next-app`
+only when the first implementation story needs them.
+
+## UI/UX Boundary
+
+Visual design lives in a separate repository (`docs/decisions/0008-ui-ux-boundary.md`).
+In this repo:
+
+- Write semantic, accessible markup. Structure and behavior are the deliverable.
+- Do not invent a design system, color palette, spacing scale, or component
+  look. Consume whatever token / class convention the UI/UX repo provides.
+- Every async surface ships explicit `loading`, `empty`, and `error` states.
+- Layout is responsive at the structural level (fluid containers, no fixed pixel
+  widths that break at 320px).
 
 ## Discovery Before Shape
 
-Before proposing implementation shape, identify:
+Before proposing implementation shape for a feature, identify:
 
-- Product surfaces: browser, mobile, desktop, CLI, API, worker, or service.
-- Runtime stack: language, framework, database, queues, providers, and hosting.
-- Core domains: the product concepts that deserve stable names and contracts.
-- Boundary inputs: user input, API requests, webhooks, jobs, files, credentials,
-  provider payloads, and environment configuration.
-- Validation ladder: the smallest checks that can prove the selected stack.
+- Routes and rendering mode per route: static, SSR, ISR, or client.
+- Data sources: internal route handlers, external APIs, CMS, database.
+- Boundary inputs: form data, search params, route params, cookies/session,
+  environment variables, webhook payloads, third-party SDK responses.
+- Interactivity: which parts are Server Components vs Client Components.
+- SEO needs: which routes must be indexable and carry metadata.
+- Validation ladder: the smallest checks that prove the change (see below).
 
-Record stack choices in `docs/decisions/` when they meaningfully constrain
-future work.
+Record a decision in `docs/decisions/` when a choice meaningfully constrains
+future work (new external provider, auth model, rendering strategy shift, data
+store).
 
-## Default Layering
-
-```text
-domain
-  <- application
-      <- infrastructure
-          <- interface
-              <- app surfaces
-```
-
-## Candidate Structure
+## Project Shape (target)
 
 ```text
-app/
-  domain/
-    entities/
-    value-objects/
-    repositories/
-    services/
-
-  application/
-    commands/
-    queries/
-    handlers/
-
-  infrastructure/
-    database/
-    logging/
-    notifications/
-
-  interface/
-    controllers/
-    dto/
-    presenters/
-    routes/
-    middlewares/
-
-surfaces/
-  browser/
-  mobile/
-  desktop/
-  cli/
+app/                      Next.js App Router routes
+  (marketing)/            route groups
+  <route>/
+    page.tsx
+    loading.tsx
+    error.tsx
+    not-found.tsx
+components/                presentational components (styled per UI/UX repo)
+lib/
+  domain/                 pure product types and rules (framework-free)
+  data/                   fetchers / repositories, parse at the edge
+  validation/             zod (or equivalent) schemas for boundary input
+server/                   route handlers, server actions
+tests/
+  unit/                   Vitest
+  e2e/                    Playwright (+ @axe-core/playwright)
 ```
 
-This is a thinking template, not a scaffold. Create real folders only when a
-story enters implementation and the selected stack needs them.
+Create a folder only when a story needs it.
 
-## Dependency Rule
+## Layering And Dependency Rule
+
+```text
+domain  <-  data / validation  <-  server (actions, route handlers)  <-  app routes / components
+```
 
 Inner layers must not depend on outer layers.
 
 | Layer | May depend on | Must not depend on |
 | --- | --- | --- |
-| domain | nothing project-external except tiny pure utilities | framework, database, UI, provider, process/env |
-| application | domain | framework, UI, provider, database concrete clients |
-| infrastructure | domain, application | interface controllers or UI |
-| interface | all backend layers | UI state or platform shell assumptions |
-| app surfaces | API contracts and app-facing clients | domain internals directly |
+| `lib/domain` | tiny pure utilities only | Next.js, React, fetch, env, DB clients |
+| `lib/data`, `lib/validation` | `lib/domain` | React components, route handlers |
+| `server` | domain, data, validation | React component internals, browser APIs |
+| `app` routes / `components` | server contracts, domain types | direct DB access, secrets |
 
 ## Parse-First Boundary Rule
 
-Unknown data must be parsed at boundaries before it enters inner code.
+Unknown data is parsed into typed values at the boundary before it reaches inner
+code.
 
-Boundaries include:
-
-- HTTP request bodies, params, and query strings.
-- Session payloads and identity claims.
-- Environment variables.
-- Database rows returned from external clients.
-- Platform shell payloads.
-- Deep links, tokens, and signed URLs.
-- Provider webhooks, events, and async payloads.
-
-Target flow:
+Boundaries: form submissions and server-action args, `searchParams` / route
+params, cookies and session/identity claims, environment variables, responses
+from external APIs and SDKs, webhook payloads, database rows from external
+clients.
 
 ```text
-unknown input
-  -> parser
-  -> typed DTO or command
-  -> application use case
-  -> domain object/value object
+unknown input  ->  schema parse (zod/valibot)  ->  typed DTO  ->  server action / use case  ->  domain value
 ```
 
-Inner layers should work with meaningful product types such as `UserId`,
-`AccountId`, `WorkspaceId`, `Role`, `DateRange`, or domain-specific IDs,
-rather than repeatedly validating raw strings.
+Inner code works with meaningful types (`Slug`, `UserId`, `Locale`, `DateRange`)
+rather than re-validating raw strings.
 
-## Command/Query Boundary
+## Server / Client Split
 
-If the product has both reads and writes, keep command/query separation clear at
-the code level even when the storage layer is simple:
+- Default to Server Components. Add `"use client"` only for interactivity
+  (state, effects, event handlers, browser APIs).
+- Never import server-only modules (DB, secrets, `server/`) into Client
+  Components. Pass data down as serializable props.
+- Mutations go through Server Actions or route handlers, which own validation
+  and any audit side effects.
 
-- Commands mutate state and own audit side effects.
-- Queries read state and format for consumers.
-- Shared domain rules live in domain/application, not controllers.
+## Rendering And SEO
+
+- Choose the least dynamic mode that works: static > ISR > SSR > client.
+- Every indexable route exports `metadata` (title, description, canonical, OG).
+- No layout shift from client-only data: render a skeleton via `loading.tsx`.
 
 ## Observability Contract
 
-The future server should emit one canonical JSON log line per request with:
-
-- timestamp
-- level
-- request_id
-- user_id when known
-- action
-- duration_ms
-- status_code
-- message
-
-Audit logs are product records. Application logs are operational records. Do not
-use one as a substitute for the other.
+Server route handlers emit one canonical JSON log line per request:
+`timestamp, level, request_id, user_id?, route, method, duration_ms,
+status_code, message`. Application logs are operational records and are separate
+from any product/audit records.
