@@ -1,143 +1,148 @@
 # harness_w_u
 
-A private repository harness for building **websites** with coding agents
-(Codex, Claude Code). It gives an agent the project context it needs before it
-touches code: what the product is, where to start, how risky a change is, and
-what proof "done" requires.
+> A repository harness for building **websites** with coding agents.
+
+`harness_w_u` gives an agent (Codex, Claude Code) the project context it needs
+*before* it edits code: what the product is, what to read first, how risky a
+change is, and what proof "done" requires. Functional implementation and
+validation live here; visual design lives in a separate repository.
 
 Forked from [`hoangnb24/repository-harness`](https://github.com/hoangnb24/repository-harness)
-(MIT) and adapted for one workflow.
+(MIT).
 
-## Split of responsibilities
+---
 
-| This repo (`harness_w_u`) | The separate UI/UX repo |
+## Overview
+
+| This repo — `harness_w_u` | The design repo — `UX_UI_HARNESS` |
 | --- | --- |
 | Product definition (`docs/product/PRODUCT.md`) | Visual language, design tokens, component styling |
-| Routes, pages, data, state (loading / empty / error) | Look and feel of those states |
+| Routes, pages, data, and state (loading / empty / error) | The look and feel of those states |
 | Semantic, accessible, responsive markup | CSS, theme, motion, brand |
-| Functional + a11y validation | Visual review |
+| Functional and accessibility validation | Visual review |
 
-The interface between them is `docs/product/PRODUCT.md`: the UI/UX repo reads it
-(delivered manually via Codex) to choose a style that fits the product. See
-`docs/decisions/0008-ui-ux-boundary.md`.
+`docs/product/PRODUCT.md` is the contract between the two repos: the design repo
+reads it to choose a style that fits the product
+(`docs/decisions/0008-ui-ux-boundary.md`).
 
-## Stack
+**Stack** — Next.js (App Router) + TypeScript + pnpm, tested with Vitest and
+Playwright (`docs/decisions/0009-web-stack.md`). The application is scaffolded by
+the first implementation story, not before.
 
-Next.js (App Router) + TypeScript + pnpm, tests with Vitest + Playwright
-(`docs/decisions/0009-web-stack.md`). The app is scaffolded by the first
-implementation story, not before.
+---
 
-## Get it running
+## Getting started
 
-Clone the repo (private — uses your GitHub login):
+**Prerequisites** — Git, the Rust toolchain ([rustup](https://rustup.rs)), and
+your agent CLI (e.g. Codex). Node.js / pnpm are only needed once the app is
+scaffolded.
 
 ```powershell
+# 1. Clone
 git clone https://github.com/trankhacthuan/harness_w_u.git
 cd harness_w_u
-```
 
-Build the Harness CLI and initialize the durable database (the binary and
-`harness.db` are git-ignored, so every clone does this once — full steps in
-`docs/QUICKSTART.md`):
-
-```powershell
+# 2. Build the Harness CLI (git-ignored; every clone does this once)
 cargo build --release -p harness-cli
 New-Item -ItemType Directory -Force scripts\bin | Out-Null
 Copy-Item target\release\harness-cli.exe scripts\bin\harness-cli.exe -Force
+
+# 3. Initialize the durable database and check status
 .\scripts\bin\harness-cli.exe init
 .\scripts\bin\harness-cli.exe query matrix
-```
 
-Then open the folder with your agent — Codex reads `AGENTS.md` automatically:
-
-```powershell
+# 4. Open with your agent — it reads AGENTS.md automatically
 codex
 ```
 
-Needs the Rust toolchain (`rustup` from https://rustup.rs). macOS/Linux: same
-steps, drop the `.exe` and use `mkdir -p scripts/bin`.
+On macOS / Linux, drop the `.exe` and use `mkdir -p scripts/bin`. Full notes:
+[`docs/QUICKSTART.md`](docs/QUICKSTART.md).
 
-## How work flows
+---
+
+## Workflow
+
+Every request passes through intake before code changes:
 
 ```text
 product idea
-  -> docs/product/PRODUCT.md (brief the UI/UX repo designs against)
-  -> feature intake: tiny / normal / high-risk   (docs/FEATURE_INTAKE.md)
-  -> story packet                                (docs/templates/story.md)
-  -> implementation (function + a11y, no bespoke styling)
-  -> validation ladder                           (docs/HARNESS.md)
-  -> trace + decision captured for the next agent
+  │
+  ├─ docs/product/PRODUCT.md ....... the brief the design repo works against
+  ├─ feature intake ............... tiny / normal / high-risk   (docs/FEATURE_INTAKE.md)
+  ├─ story packet ................. one vertical slice          (docs/templates/story.md)
+  ├─ implementation .............. function + a11y; no bespoke styling
+  ├─ validation ladder ........... lint · typecheck · test · e2e  (docs/HARNESS.md)
+  └─ trace + decision ............ evidence for the next agent
 ```
 
-## Layout
+---
+
+## Repository layout
 
 ```text
-AGENTS.md              agent entrypoint (read first)
-CLAUDE.md              Claude Code shim that imports AGENTS.md + FEATURE_INTAKE.md
+AGENTS.md              Agent entrypoint — read first.
+CLAUDE.md              Claude Code shim; imports AGENTS.md + FEATURE_INTAKE.md.
 docs/
-  HARNESS.md           collaboration model + validation ladder
-  FEATURE_INTAKE.md    risk classification
-  ARCHITECTURE.md      Next.js architecture + UI/UX boundary rules
-  CONTEXT_RULES.md     what to read per lane / phase
-  QUICKSTART.md        first-run setup
-  product/PRODUCT.md   the product brief
-  decisions/           durable decisions (0008 UI/UX boundary, 0009 stack, ...)
-  stories/             story packets and backlog
-  templates/           story / decision / validation templates
-  history/             archived upstream phase docs (reference only)
-crates/harness-cli/    Rust CLI: durable layer (SQLite records of intake, stories, traces)
-scripts/               installer + CLI build helper
+  HARNESS.md           Collaboration model and validation ladder.
+  FEATURE_INTAKE.md    Risk classification and lanes.
+  ARCHITECTURE.md      Next.js architecture and the UI/UX boundary.
+  CONTEXT_RULES.md     What to read, per lane and phase.
+  QUICKSTART.md        First-run setup.
+  product/PRODUCT.md   The product brief.
+  decisions/           Durable decisions (ADRs).
+  stories/             Story packets and backlog.
+  templates/           Story, decision, and validation templates.
+  history/             Archived upstream planning docs (reference only).
+crates/harness-cli/    Rust CLI — the durable layer (SQLite).
+scripts/               Installer and CLI build helpers.
 ```
+
+---
 
 ## The Harness CLI
 
-`scripts\bin\harness-cli.exe` is the operational tool. It stores intake
-classifications, story status, decisions, and execution traces in a local
-git-ignored `harness.db`.
+`scripts\bin\harness-cli.exe` records intake classifications, story status,
+decisions, and execution traces in a local, git-ignored `harness.db`.
 
-```powershell
-.\scripts\bin\harness-cli.exe intake --type change-request --summary "..." --lane normal
-.\scripts\bin\harness-cli.exe story add --id US-001 --title "..." --lane normal
-.\scripts\bin\harness-cli.exe story update --id US-001 --unit 1 --e2e 1
-.\scripts\bin\harness-cli.exe trace --summary "..." --outcome success
-.\scripts\bin\harness-cli.exe query matrix
-```
+| Command | Purpose |
+| --- | --- |
+| `harness-cli init` | Create `harness.db`. |
+| `harness-cli intake --type <t> --summary "…" --lane <lane>` | Record a classified request. |
+| `harness-cli story add --id US-001 --title "…" --lane <lane>` | Open a story. |
+| `harness-cli story update --id US-001 --unit 1 --e2e 1` | Record proof status. |
+| `harness-cli trace --summary "…" --outcome <outcome>` | Log an execution trace. |
+| `harness-cli query matrix` | Show behavior-to-proof status. |
 
 The optional `harness-cli tool` registry is not maintained here — the agent
 runtime already provides tool access.
 
-## Installing this harness into another project
+---
 
-This is **not** how you open this repo — it copies the harness skeleton
-(`AGENTS.md`, `docs/`, `scripts/`) into a *different* website project. Run it
-from that project's folder.
+## Reusing the harness in another project
 
-Remote one-liner — works only while this repo is **public** (the raw URL 404s
-for a private repo):
-
-```powershell
-& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/trankhacthuan/harness_w_u/main/scripts/install-harness.ps1"))) -Yes
-```
-
-```bash
-curl -fsSL "https://raw.githubusercontent.com/trankhacthuan/harness_w_u/main/scripts/install-harness.sh" | bash -s -- --yes
-```
-
-While the repo is private, clone it once and run the script **locally** (this is
-the supported path):
+`scripts/install-harness.*` copies the harness skeleton (`AGENTS.md`, `docs/`,
+`scripts/`) into a different project. Because this repository is private, run it
+from a local clone:
 
 ```powershell
 git clone https://github.com/trankhacthuan/harness_w_u.git
-.\harness_w_u\scripts\install-harness.ps1 -Directory "D:\path\to\website" -Yes
+.\harness_w_u\scripts\install-harness.ps1 -Directory "D:\path\to\project" -Yes
 ```
 
 ```bash
 git clone https://github.com/trankhacthuan/harness_w_u.git
-harness_w_u/scripts/install-harness.sh --directory /path/to/website --yes
+harness_w_u/scripts/install-harness.sh --directory /path/to/project --yes
 ```
 
-Run from a clone, the installer copies the harness files from that clone (no
-network) and reuses the `harness-cli` binary you already built in it. No
-published CLI release is needed; add `--no-cli` / `-NoCli` to skip the binary
-entirely. Conflicts on an existing `AGENTS.md` / `docs/` / `scripts/` are
-handled with `--merge` or `--override`.
+The installer copies from the clone (no network) and reuses the `harness-cli`
+binary already built there. Flags: `--no-cli` / `-NoCli` skips the binary;
+`--merge` or `--override` resolves conflicts with an existing `AGENTS.md` /
+`docs/` / `scripts/`. If the repository is made public, the one-line remote
+installers in `scripts/README.md` work directly.
+
+---
+
+## Provenance & license
+
+Derived from `hoangnb24/repository-harness` (MIT); see [`LICENSE`](LICENSE).
+Changes are re-owned under the same license.
