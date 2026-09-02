@@ -26,6 +26,9 @@ Options:
                          AGENTS.md, docs/, and scripts/.
       --force            Overwrite existing files after backing them up.
       --dry-run          Show what would change without writing files.
+      --no-cli           Do not install the harness-cli binary (also
+                         HARNESS_SKIP_CLI=1). A missing release never fails
+                         the install; a warning explains how to add it.
   -h, --help             Show this help.
 
 Safety:
@@ -468,9 +471,8 @@ detect_cli_platform() {
     Darwin:x86_64) printf 'macos-x64' ;;
     Linux:x86_64)  printf 'linux-x64' ;;
     Linux:aarch64|Linux:arm64) printf 'linux-arm64' ;;
-    *)
-      fail "Unsupported Harness CLI platform: $os/$arch."
-      ;;
+    MINGW*:*|MSYS*:*|CYGWIN*:*) printf 'windows-x64' ;;
+    *) printf 'unknown' ;;
   esac
 }
 
@@ -525,11 +527,21 @@ default_cli_base_url() {
   fi
 }
 
-install_harness_cli_binary() {
-  [ "$INSTALL_RUST_CLI" -eq 1 ] || return 0
+cli_unavailable() {
+  log "WARNING  Harness CLI binary not installed ($1)."
+  log "         Add it to the target project manually:"
+  log "           - copy scripts/bin/harness-cli(.exe) from your harness checkout, or"
+  log "           - build it where the crates/ source exists:"
+  log "               cargo build --release -p harness-cli"
+  log "         See docs/QUICKSTART.md. All other Harness files installed fine."
+  SKIPPED=$((SKIPPED + 1))
+}
 
-  local platform binary_name binary_url checksum_url target tmp_dir binary_tmp checksum_tmp expected actual
-  platform="${HARNESS_CLI_PLATFORM:-$(detect_cli_platform)}"
+install_harness_cli_binary() {
+  [ "$INSTALL_RUST_CLI" -eq 1 ] || { log "Harness CLI binary: skipped (--no-cli)"; return 0; }
+
+  local platform binary_name binary_url checksum_url target tmp_dir binary_tmp checksum_tmp expected actual _cand _dst
+  platform="${HARNESS_CLI_PLATFORM:-$(detect_cli_platform || printf 'unknown')}"
   binary_name="harness-cli-$platform"
   binary_url="$CLI_BASE_URL/$binary_name"
   checksum_url="$binary_url.sha256"
@@ -548,21 +560,53 @@ install_harness_cli_binary() {
     return 0
   fi
 
-  command -v curl >/dev/null 2>&1 || fail "curl is required to download the Harness CLI"
+  # Private-repo friendly: reuse a prebuilt binary from a local source checkout.
+  if [ "$SOURCE_MODE" = "local" ]; then
+    for _cand in \
+      "$SOURCE_ROOT/scripts/bin/harness-cli" \
+      "$SOURCE_ROOT/scripts/bin/harness-cli.exe" \
+      "$SOURCE_ROOT/target/release/harness-cli" \
+      "$SOURCE_ROOT/target/release/harness-cli.exe"; do
+      if [ -f "$_cand" ]; then
+        _dst="$target"
+        case "$_cand" in *.exe) _dst="$target.exe" ;; esac
+        mkdir -p "$(dirname "$_dst")"
+        cp "$_cand" "$_dst"
+        chmod 755 "$_dst" 2>/dev/null || true
+        CREATED=$((CREATED + 1))
+        log "created  scripts/bin/$(basename "$_dst") (copied from local source)"
+        return 0
+      fi
+    done
+  fi
+
+  if [ "$platform" = "unknown" ] || [ -z "$platform" ]; then
+    cli_unavailable "could not detect a supported platform"
+    return 0
+  fi
+
+  if ! command -v curl >/dev/null 2>&1; then
+    cli_unavailable "curl is not available"
+    return 0
+  fi
 
   tmp_dir="$(mktemp -d)"
   binary_tmp="$tmp_dir/$binary_name"
   checksum_tmp="$tmp_dir/$binary_name.sha256"
 
-  download_file "$binary_url" "$binary_tmp"
-  download_file "$checksum_url" "$checksum_tmp"
+  if ! curl -fsSL "$binary_url" -o "$binary_tmp" 2>/dev/null \
+     || ! curl -fsSL "$checksum_url" -o "$checksum_tmp" 2>/dev/null; then
+    rm -rf "$tmp_dir"
+    cli_unavailable "no downloadable release at $CLI_BASE_URL"
+    return 0
+  fi
 
   expected="$(awk '{ print $1; exit }' "$checksum_tmp")"
-  [ -n "$expected" ] || fail "Checksum file is empty: $checksum_url"
-  actual="$(sha256_file "$binary_tmp")"
-  if [ "$actual" != "$expected" ]; then
+  actual="$(sha256_file "$binary_tmp" 2>/dev/null || true)"
+  if [ -z "$expected" ] || [ "$actual" != "$expected" ]; then
     rm -rf "$tmp_dir"
-    fail "Checksum mismatch for $binary_name: expected $expected, got $actual"
+    cli_unavailable "checksum verification failed for $binary_name"
+    return 0
   fi
 
   mkdir -p "$(dirname "$target")"
@@ -674,6 +718,7 @@ YES=0
 FORCE=0
 DRY_RUN=0
 INSTALL_RUST_CLI=1
+[ -n "${HARNESS_SKIP_CLI:-}" ] && INSTALL_RUST_CLI=0
 REFRESH_AGENT_SHIM=0
 INSTALL_CLAUDE_SHIM=0
 REQUESTED_CONFLICT_ACTION=""
@@ -716,6 +761,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --dry-run)
       DRY_RUN=1
+      shift
+      ;;
+    --no-cli)
+      INSTALL_RUST_CLI=0
       shift
       ;;
     -h|--help)

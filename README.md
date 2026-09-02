@@ -123,11 +123,21 @@ for a private repo):
 curl -fsSL "https://raw.githubusercontent.com/trankhacthuan/harness_w_u/main/scripts/install-harness.sh" | bash -s -- --yes
 ```
 
-While the repo is private, run the script locally instead:
+While the repo is private, clone it once and run the script **locally** (this is
+the supported path):
 
 ```powershell
-D:\path\to\harness_w_u\scripts\install-harness.ps1 -Directory "D:\path\to\website" -Yes
+git clone https://github.com/trankhacthuan/harness_w_u.git
+.\harness_w_u\scripts\install-harness.ps1 -Directory "D:\path\to\website" -Yes
 ```
 
-Prebuilt CLI release assets are not published for this fork yet; the target
-project builds the CLI from source (`docs/QUICKSTART.md`).
+```bash
+git clone https://github.com/trankhacthuan/harness_w_u.git
+harness_w_u/scripts/install-harness.sh --directory /path/to/website --yes
+```
+
+Run from a clone, the installer copies the harness files from that clone (no
+network) and reuses the `harness-cli` binary you already built in it. No
+published CLI release is needed; add `--no-cli` / `-NoCli` to skip the binary
+entirely. Conflicts on an existing `AGENTS.md` / `docs/` / `scripts/` are
+handled with `--merge` or `--override`.

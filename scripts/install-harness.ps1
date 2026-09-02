@@ -7,7 +7,8 @@ param(
     [switch]$RefreshAgentShim,
     [switch]$Override,
     [switch]$Force,
-    [switch]$DryRun
+    [switch]$DryRun,
+    [switch]$NoCli
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,6 +19,16 @@ function Write-Step([string]$Message) {
 
 function Fail([string]$Message) {
     throw "Error: $Message"
+}
+
+function Write-CliUnavailable([string]$Reason) {
+    Write-Step "WARNING  Harness CLI binary not installed ($Reason)."
+    Write-Step "         Add it to the target project manually:"
+    Write-Step "           - copy scripts\bin\harness-cli.exe from your harness checkout, or"
+    Write-Step "           - build it where the crates\ source exists:"
+    Write-Step "               cargo build --release -p harness-cli"
+    Write-Step "         See docs/QUICKSTART.md. All other Harness files installed fine."
+    $script:Skipped++
 }
 
 function Resolve-TargetPath([string]$PathValue) {
@@ -214,9 +225,15 @@ function Get-DefaultCliBaseUrl {
 }
 
 function Install-HarnessCliBinary {
+    if ($NoCli -or $env:HARNESS_SKIP_CLI) {
+        Write-Step "Harness CLI binary: skipped (-NoCli)"
+        return
+    }
+
     $platform = if ($env:HARNESS_CLI_PLATFORM) { $env:HARNESS_CLI_PLATFORM } else { "windows-x64" }
     if ($platform -ne "windows-x64") {
-        Fail "Unsupported Windows Harness CLI platform: $platform"
+        Write-CliUnavailable "unsupported platform: $platform"
+        return
     }
 
     $binaryName = "harness-cli-windows-x64.exe"
@@ -237,21 +254,40 @@ function Install-HarnessCliBinary {
         return
     }
 
+    # Private-repo friendly: reuse a prebuilt binary from a local source checkout.
+    if ($script:Source.Mode -eq "local") {
+        foreach ($cand in @(
+            (Join-Path $script:Source.Root "scripts/bin/harness-cli.exe"),
+            (Join-Path $script:Source.Root "target/release/harness-cli.exe")
+        )) {
+            if (Test-Path $cand) {
+                New-Item -ItemType Directory -Force -Path (Split-Path -Parent $target) | Out-Null
+                Copy-Item -LiteralPath $cand -Destination $target -Force
+                $script:Created++
+                Write-Step "created  scripts/bin/harness-cli.exe (copied from local source)"
+                return
+            }
+        }
+    }
+
     $tmpDir = Join-Path ([System.IO.Path]::GetTempPath()) ("harness-cli-" + [guid]::NewGuid().ToString("N"))
     New-Item -ItemType Directory -Force -Path $tmpDir | Out-Null
     try {
         $binaryTmp = Join-Path $tmpDir $binaryName
         $checksumTmp = Join-Path $tmpDir "$binaryName.sha256"
-        Invoke-WebRequest -UseBasicParsing -Uri $binaryUrl -OutFile $binaryTmp
-        Invoke-WebRequest -UseBasicParsing -Uri $checksumUrl -OutFile $checksumTmp
+        try {
+            Invoke-WebRequest -UseBasicParsing -Uri $binaryUrl -OutFile $binaryTmp
+            Invoke-WebRequest -UseBasicParsing -Uri $checksumUrl -OutFile $checksumTmp
+        } catch {
+            Write-CliUnavailable "no downloadable release at $script:CliBaseUrl"
+            return
+        }
 
         $expected = ((Get-Content -LiteralPath $checksumTmp -Raw) -split "\s+")[0].ToLowerInvariant()
-        if ([string]::IsNullOrWhiteSpace($expected)) {
-            Fail "Checksum file is empty: $checksumUrl"
-        }
         $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $binaryTmp).Hash.ToLowerInvariant()
-        if ($actual -ne $expected) {
-            Fail "Checksum mismatch for $binaryName`: expected $expected, got $actual"
+        if ([string]::IsNullOrWhiteSpace($expected) -or $actual -ne $expected) {
+            Write-CliUnavailable "checksum verification failed for $binaryName"
+            return
         }
 
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $target) | Out-Null
