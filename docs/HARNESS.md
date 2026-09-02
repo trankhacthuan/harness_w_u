@@ -368,26 +368,34 @@ A task is done only when:
   `scripts/bin/harness-cli backlog add`.
 - The final response says what changed and what was not attempted.
 
-## Future Validation Ladder
+## Validation Ladder
 
-No validation scripts exist yet. When implementation begins, the expected ladder
-is:
+Stack: Next.js + TypeScript + pnpm (`docs/decisions/0009-web-stack.md`). The
+`pnpm` scripts below are wired by the first implementation story; until the app
+is scaffolded they do not exist yet and must not be claimed as passing.
 
 ```text
-validate:quick
-  format, lint, typecheck, unit tests, architecture check
+validate:quick   pnpm lint && pnpm typecheck && pnpm test
+  Prettier check, ESLint (incl. jsx-a11y), tsc --noEmit, Vitest unit/component.
 
-test:integration
-  backend, database, provider, or service checks as the stack requires
+test:e2e         pnpm test:e2e
+  Playwright user flows + @axe-core/playwright accessibility assertions.
 
-test:e2e
-  user-visible end-to-end flows
+test:platform    pnpm build
+  Next.js production build succeeds; no type or route errors.
 
-test:platform
-  shell, mobile, desktop, or deployment smoke checks as the stack requires
-
-test:release
-  full suite, log checks, and performance smoke
+test:release     pnpm lint && pnpm typecheck && pnpm test && pnpm test:e2e && pnpm build
+  Full suite before a deploy story; add a Lighthouse/perf-budget check when a
+  hosting decision exists.
 ```
 
-Agents must not claim these commands pass until they exist and have been run.
+Required checks per lane:
+
+| Lane | Must run |
+| --- | --- |
+| tiny | `pnpm lint` + `pnpm typecheck` on touched files |
+| normal | `validate:quick`, plus `test:e2e` when a user-visible flow changes |
+| high-risk | `test:release` |
+
+Agents must not claim a command passed until it exists and has been run, and
+must paste the command output into the trace / story evidence.
