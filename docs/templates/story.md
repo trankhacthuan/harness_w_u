@@ -24,12 +24,26 @@ Describe the behavior this story must make true.
 
 ## Design Notes
 
-- Commands:
-- Queries:
-- API:
-- Tables:
-- Domain rules:
-- UI surfaces:
+- Routes / rendering mode (static / ISR / SSR / client):
+- Data sources and boundary inputs (parse-first):
+- Server vs Client Components:
+- Server actions / route handlers:
+- Domain types and rules:
+- SEO metadata needs:
+
+## Web Page Checklist
+
+Fill this when the story adds or changes a route. Delete it for non-UI stories.
+
+- [ ] Loading state (`loading.tsx` / skeleton)
+- [ ] Empty state
+- [ ] Error state (`error.tsx` / inline)
+- [ ] Keyboard navigable, visible focus, correct landmarks/headings
+- [ ] Labels / alt text / ARIA where needed (`jsx-a11y` clean, axe clean)
+- [ ] Responsive 320px → wide desktop, no horizontal scroll
+- [ ] Uses the UI/UX repo's token / class convention, no bespoke styling
+- [ ] `metadata` exported if the route is indexable
+- [ ] Forms: client + server validation, error summary, success path
 
 ## Validation
 
