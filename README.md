@@ -121,24 +121,40 @@ runtime already provides tool access.
 ## Reusing the harness in another project
 
 `scripts/install-harness.*` copies the harness skeleton (`AGENTS.md`, `docs/`,
-`scripts/`) into a different project. Because this repository is private, run it
-from a local clone:
+`scripts/`) into a different project. Run it from the target project's directory.
+
+### Remote one-liner — requires this repository to be public
+
+The intended way once the repo is shared. Until then the raw URLs return `404`.
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/trankhacthuan/harness_w_u/main/scripts/install-harness.sh?$(date +%s)" | bash -s -- --yes
+```
 
 ```powershell
-git clone https://github.com/trankhacthuan/harness_w_u.git
-.\harness_w_u\scripts\install-harness.ps1 -Directory "D:\path\to\project" -Yes
+& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/trankhacthuan/harness_w_u/main/scripts/install-harness.ps1"))) -Yes
 ```
+
+Merge / override / `--claude` / `--directory` variants are in
+[`scripts/README.md`](scripts/README.md).
+
+### Local install — works while the repository is private
 
 ```bash
 git clone https://github.com/trankhacthuan/harness_w_u.git
 harness_w_u/scripts/install-harness.sh --directory /path/to/project --yes
 ```
 
-The installer copies from the clone (no network) and reuses the `harness-cli`
-binary already built there. Flags: `--no-cli` / `-NoCli` skips the binary;
-`--merge` or `--override` resolves conflicts with an existing `AGENTS.md` /
-`docs/` / `scripts/`. If the repository is made public, the one-line remote
-installers in `scripts/README.md` work directly.
+```powershell
+git clone https://github.com/trankhacthuan/harness_w_u.git
+.\harness_w_u\scripts\install-harness.ps1 -Directory "D:\path\to\project" -Yes
+```
+
+The installer copies from the clone with no network and reuses the `harness-cli`
+binary already built there.
+
+**Flags** — `--no-cli` / `-NoCli` skips the binary; `--merge` or `--override`
+resolves conflicts with an existing `AGENTS.md` / `docs/` / `scripts/`.
 
 ---
 
