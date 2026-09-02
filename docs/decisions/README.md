@@ -10,9 +10,9 @@ durable decision row:
 
 ```bash
 scripts/bin/harness-cli decision add \
-  --id 0008-auth-boundary \
-  --title "Auth Boundary" \
-  --doc docs/decisions/0008-auth-boundary.md
+  --id NNNN-short-slug \
+  --title "Short Title" \
+  --doc docs/decisions/NNNN-short-slug.md
 ```
 
 Trace fields such as `--decisions` summarize task-level choices. They do not
