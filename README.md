@@ -27,9 +27,18 @@ Next.js (App Router) + TypeScript + pnpm, tests with Vitest + Playwright
 (`docs/decisions/0009-web-stack.md`). The app is scaffolded by the first
 implementation story, not before.
 
-## First run
+## Get it running
 
-See `docs/QUICKSTART.md`. In short:
+Clone the repo (private — uses your GitHub login):
+
+```powershell
+git clone https://github.com/trankhacthuan/harness_w_u.git
+cd harness_w_u
+```
+
+Build the Harness CLI and initialize the durable database (the binary and
+`harness.db` are git-ignored, so every clone does this once — full steps in
+`docs/QUICKSTART.md`):
 
 ```powershell
 cargo build --release -p harness-cli
@@ -38,6 +47,15 @@ Copy-Item target\release\harness-cli.exe scripts\bin\harness-cli.exe -Force
 .\scripts\bin\harness-cli.exe init
 .\scripts\bin\harness-cli.exe query matrix
 ```
+
+Then open the folder with your agent — Codex reads `AGENTS.md` automatically:
+
+```powershell
+codex
+```
+
+Needs the Rust toolchain (`rustup` from https://rustup.rs). macOS/Linux: same
+steps, drop the `.exe` and use `mkdir -p scripts/bin`.
 
 ## How work flows
 
@@ -90,6 +108,13 @@ runtime already provides tool access.
 
 ## Installing this harness into another project
 
+This is **not** how you open this repo — it copies the harness skeleton
+(`AGENTS.md`, `docs/`, `scripts/`) into a *different* website project. Run it
+from that project's folder.
+
+Remote one-liner — works only while this repo is **public** (the raw URL 404s
+for a private repo):
+
 ```powershell
 & ([scriptblock]::Create((irm "https://raw.githubusercontent.com/trankhacthuan/harness_w_u/main/scripts/install-harness.ps1"))) -Yes
 ```
@@ -98,5 +123,11 @@ runtime already provides tool access.
 curl -fsSL "https://raw.githubusercontent.com/trankhacthuan/harness_w_u/main/scripts/install-harness.sh" | bash -s -- --yes
 ```
 
-Prebuilt CLI release assets are not published for this fork yet; until they are,
-build the CLI from source (`docs/QUICKSTART.md`).
+While the repo is private, run the script locally instead:
+
+```powershell
+D:\path\to\harness_w_u\scripts\install-harness.ps1 -Directory "D:\path\to\website" -Yes
+```
+
+Prebuilt CLI release assets are not published for this fork yet; the target
+project builds the CLI from source (`docs/QUICKSTART.md`).
