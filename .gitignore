@@ -7,6 +7,24 @@ harness.db-shm
 target/
 dist/
 
-# Downloaded Harness CLI binary for installed project instances.
+# Downloaded / built Harness CLI binary.
 scripts/bin/harness-cli
 scripts/bin/harness-cli.exe
+
+# Node / Next.js (web app, once scaffolded).
+node_modules/
+.next/
+out/
+.turbo/
+coverage/
+playwright-report/
+test-results/
+.env
+.env.local
+.env.*.local
+*.tsbuildinfo
+.pnpm-store/
+
+# OS / editor
+.DS_Store
+Thumbs.db
