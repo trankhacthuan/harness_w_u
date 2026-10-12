@@ -310,13 +310,64 @@ function Install-HarnessCliBinary {
     }
 }
 
+# True when a directory is a poor place to drop a project: a drive root, a
+# well-known non-project folder, a protected Windows location, or not writable.
+function Test-UnsuitableTargetDir([string]$Path) {
+    $p = $Path.TrimEnd('\', '/')
+    $known = @($HOME, (Join-Path $HOME "Desktop"), (Join-Path $HOME "Documents"), (Join-Path $HOME "Downloads")) |
+        ForEach-Object { $_.TrimEnd('\', '/') }
+    if ($known -contains $p) { return $true }
+    if ($p -match '^[A-Za-z]:$') { return $true }
+    if ($p -match '\\WindowsApps(\\|$)') { return $true }
+    if ($p -match '^[A-Za-z]:\\(Windows|Program Files|Program Files \(x86\))(\\|$)') { return $true }
+
+    if (Test-Path -LiteralPath $Path -PathType Container) {
+        $probe = Join-Path $Path (".harness-write-test-" + [guid]::NewGuid().ToString("N"))
+        try {
+            New-Item -ItemType File -Path $probe -ErrorAction Stop | Out-Null
+            Remove-Item -LiteralPath $probe -Force -ErrorAction SilentlyContinue
+        } catch {
+            return $true
+        }
+    }
+    return $false
+}
+
+# Create harness.db in the target so the install is ready to use in one step.
+function Initialize-HarnessDatabase {
+    if ($DryRun) { return }
+    $cli = Join-Path $script:TargetDir "scripts/bin/harness-cli.exe"
+    if (!(Test-Path -LiteralPath $cli)) { return }
+
+    Push-Location -LiteralPath $script:TargetDir
+    try {
+        & $cli init *> $null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Step "initialized harness.db"
+        } else {
+            Write-Step "WARNING  'harness-cli init' failed; run it from $script:TargetDir when ready."
+        }
+    } catch {
+        Write-Step "WARNING  could not run harness-cli init: $($_.Exception.Message)"
+    } finally {
+        Pop-Location
+    }
+}
+
 $script:Created = 0
 $script:Updated = 0
 $script:Skipped = 0
 $script:Source = Get-SourceMode
 $script:SourceBaseUrl = if ($env:HARNESS_SOURCE_BASE_URL) { $env:HARNESS_SOURCE_BASE_URL.TrimEnd("/") } else { "https://raw.githubusercontent.com/trankhacthuan/harness_w_u/main" }
 $script:CliBaseUrl = if ($env:HARNESS_CLI_BASE_URL) { $env:HARNESS_CLI_BASE_URL.TrimEnd("/") } else { Get-DefaultCliBaseUrl }
+$explicitTarget = ![string]::IsNullOrWhiteSpace($Directory)
 $script:TargetDir = Resolve-TargetPath $Directory
+if (!$explicitTarget -and (Test-UnsuitableTargetDir $script:TargetDir)) {
+    $fallbackDir = Join-Path $HOME "harness_w_u"
+    Write-Step "Current directory is not a suitable project folder: $script:TargetDir"
+    Write-Step "Installing into $fallbackDir instead (use -Directory <path> to choose another)."
+    $script:TargetDir = $fallbackDir
+}
 $script:BackupDir = Join-Path $script:TargetDir (".harness-backup/" + (Get-Date -Format "yyyyMMddHHmmss"))
 $script:ConflictAction = "install"
 
@@ -427,9 +478,18 @@ foreach ($file in $files) {
 
 Refresh-AgentShimFile
 Install-HarnessCliBinary
+Initialize-HarnessDatabase
 
 Write-Step ""
 Write-Step "Done. Created: $script:Created, updated: $script:Updated, skipped: $script:Skipped."
+if (!$DryRun) {
+    Write-Step ""
+    Write-Step "Next steps:"
+    if ($script:TargetDir -ne (Get-Location).Path) {
+        Write-Step "  cd `"$script:TargetDir`""
+    }
+    Write-Step "  codex        # or open this folder in VS Code / Claude Code"
+}
 if ($script:Skipped -gt 0 -and !$Force) {
     Write-Step "Existing files were left untouched. Re-run with -Force to overwrite with backups."
 }

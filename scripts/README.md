@@ -83,9 +83,16 @@ docs.
 
 ## Installer
 
-The upstream installer applies the Harness v0 operating files and folder
-structure to a target project directory. It defaults to the current directory,
-accepts a target path, and asks interactive users whether to `1. Merge`,
+The installer applies the Harness v0 operating files and folder structure to a
+target project directory. It defaults to the current directory — or to
+`~/harness_w_u` when no target is given and the current directory is your home
+folder, a system folder (`WindowsApps`, `Program Files`, `Windows`, a drive
+root), or not writable. An explicit `--directory` / `-Directory` /
+`HARNESS_TARGET_DIR` is always honored. After copying files it downloads and
+verifies the `harness-cli` binary from the latest release, runs
+`harness-cli init`, and prints the next steps. `--no-cli` / `-NoCli` /
+`HARNESS_SKIP_CLI=1` skips the binary; a missing release only warns.
+It accepts a target path, and asks interactive users whether to `1. Merge`,
 `2. Override`, or `3. Stop` when the target already contains `AGENTS.md`,
 `docs/`, or `scripts/`.
 Non-interactive installs stop on those protected paths unless `--merge` or

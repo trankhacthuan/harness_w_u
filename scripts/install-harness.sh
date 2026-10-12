@@ -8,7 +8,9 @@ Usage: install-harness.sh [options] [path]
 Apply the Harness v0 files and folders to a target project directory.
 
 Options:
-  -d, --directory <path>  Target directory. Defaults to the current directory.
+  -d, --directory <path>  Target directory. Defaults to the current directory,
+                         or ~/harness_w_u when the current directory is your
+                         home folder, a system folder, or not writable.
   -y, --yes              Accept defaults and skip prompts.
       --merge            On protected-path conflict, keep existing files in
                          place and install only missing Harness files.
@@ -543,9 +545,12 @@ install_harness_cli_binary() {
   local platform binary_name binary_url checksum_url target tmp_dir binary_tmp checksum_tmp expected actual _cand _dst
   platform="${HARNESS_CLI_PLATFORM:-$(detect_cli_platform || printf 'unknown')}"
   binary_name="harness-cli-$platform"
+  target="$TARGET_DIR/scripts/bin/harness-cli"
+  case "$platform" in
+    windows-*) binary_name="$binary_name.exe"; target="$target.exe" ;;
+  esac
   binary_url="$CLI_BASE_URL/$binary_name"
   checksum_url="$binary_url.sha256"
-  target="$TARGET_DIR/scripts/bin/harness-cli"
 
   if [ -e "$target" ] && [ "$CONFLICT_ACTION" = "merge" ] && [ "$FORCE" -eq 0 ]; then
     log "skip     scripts/bin/harness-cli (merge keeps existing file)"
@@ -554,7 +559,7 @@ install_harness_cli_binary() {
   fi
 
   if [ "$DRY_RUN" -eq 1 ]; then
-    log "download $binary_name -> scripts/bin/harness-cli"
+    log "download $binary_name -> scripts/bin/$(basename "$target")"
     log "verify   $binary_name.sha256"
     CREATED=$((CREATED + 1))
     return 0
@@ -613,19 +618,19 @@ install_harness_cli_binary() {
   if [ -e "$target" ]; then
     if [ "$FORCE" -eq 1 ]; then
       mkdir -p "$BACKUP_DIR/scripts/bin"
-      cp -p "$target" "$BACKUP_DIR/scripts/bin/harness-cli"
+      cp -p "$target" "$BACKUP_DIR/scripts/bin/$(basename "$target")"
     fi
     UPDATED=$((UPDATED + 1))
-    log "updated  scripts/bin/harness-cli"
+    log "updated  scripts/bin/$(basename "$target")"
   else
     CREATED=$((CREATED + 1))
-    log "created  scripts/bin/harness-cli"
+    log "created  scripts/bin/$(basename "$target")"
   fi
 
   cp "$binary_tmp" "$target"
   chmod 755 "$target"
   rm -rf "$tmp_dir"
-  log "verified scripts/bin/harness-cli ($platform)"
+  log "verified scripts/bin/$(basename "$target") ($platform)"
 }
 
 check_protected_target_paths() {
@@ -713,7 +718,49 @@ override_protected_target_paths() {
   done
 }
 
+# True (0) when a directory is a poor place to drop a project: filesystem root,
+# a well-known non-project folder, a protected Windows location, or read-only.
+unsuitable_target_dir() {
+  local dir="$1" probe
+  case "$dir" in
+    "/"|"$HOME"|"$HOME/Desktop"|"$HOME/Documents"|"$HOME/Downloads") return 0 ;;
+    */WindowsApps|*/WindowsApps/*) return 0 ;;
+    *"/Program Files"|*"/Program Files/"*|*"/Program Files (x86)"|*"/Program Files (x86)/"*) return 0 ;;
+    /[a-zA-Z]/Windows|/[a-zA-Z]/Windows/*) return 0 ;;
+  esac
+  if [ -d "$dir" ]; then
+    probe="$dir/.harness-write-test.$$"
+    if ( : > "$probe" ) 2>/dev/null; then
+      rm -f "$probe"
+    else
+      return 0
+    fi
+  fi
+  return 1
+}
+
+# Create harness.db in the target so the install is ready to use in one step.
+init_harness_database() {
+  [ "$DRY_RUN" -eq 0 ] || return 0
+  local cli="" candidate
+  for candidate in "$TARGET_DIR/scripts/bin/harness-cli" "$TARGET_DIR/scripts/bin/harness-cli.exe"; do
+    if [ -f "$candidate" ]; then
+      cli="$candidate"
+      break
+    fi
+  done
+  [ -n "$cli" ] || return 0
+
+  if (cd "$TARGET_DIR" && "$cli" init >/dev/null 2>&1); then
+    log "initialized harness.db"
+  else
+    log "WARNING  could not run '$cli init'; run it from $TARGET_DIR when ready."
+  fi
+}
+
 TARGET_INPUT="${HARNESS_TARGET_DIR:-$PWD}"
+TARGET_EXPLICIT=0
+[ -n "${HARNESS_TARGET_DIR:-}" ] && TARGET_EXPLICIT=1
 YES=0
 FORCE=0
 DRY_RUN=0
@@ -729,6 +776,7 @@ while [ "$#" -gt 0 ]; do
     -d|--directory)
       [ "$#" -ge 2 ] || fail "$1 requires a path"
       TARGET_INPUT="$2"
+      TARGET_EXPLICIT=1
       shift 2
       ;;
     -y|--yes)
@@ -796,6 +844,7 @@ fi
 
 if [ -n "$POSITIONAL_TARGET" ]; then
   TARGET_INPUT="$POSITIONAL_TARGET"
+  TARGET_EXPLICIT=1
 fi
 
 SCRIPT_PATH="${BASH_SOURCE[0]:-$0}"
@@ -814,6 +863,13 @@ fi
 
 if [ -z "$CLI_BASE_URL" ]; then
   CLI_BASE_URL="$(default_cli_base_url)"
+fi
+
+if [ "$TARGET_EXPLICIT" -eq 0 ] && unsuitable_target_dir "$TARGET_INPUT"; then
+  FALLBACK_DIR="$HOME/harness_w_u"
+  log "Current directory is not a suitable project folder: $TARGET_INPUT"
+  log "Installing into $FALLBACK_DIR instead (use --directory <path> to choose another)."
+  TARGET_INPUT="$FALLBACK_DIR"
 fi
 
 if [ "$YES" -eq 0 ] && can_prompt; then
@@ -915,9 +971,19 @@ EOF
 refresh_agent_shim
 write_claude_shim
 install_harness_cli_binary
+init_harness_database
 
 log ""
 log "Done. Created: $CREATED, updated: $UPDATED, skipped: $SKIPPED."
+
+if [ "$DRY_RUN" -eq 0 ]; then
+  log ""
+  log "Next steps:"
+  if [ "$TARGET_DIR" != "$PWD" ]; then
+    log "  cd \"$TARGET_DIR\""
+  fi
+  log "  codex        # or open this folder in VS Code / Claude Code"
+fi
 
 if [ "$SKIPPED" -gt 0 ] && [ "$FORCE" -eq 0 ]; then
   log "Existing files were left untouched. Re-run with --force to overwrite with backups."

@@ -12,6 +12,53 @@ Forked from [`hoangnb24/repository-harness`](https://github.com/hoangnb24/reposi
 
 ---
 
+## Quick start — one line
+
+Paste one line in any terminal (Codex CLI, VS Code, PowerShell, bash). No clone,
+no pre-existing folder, no manual build.
+
+**Windows (PowerShell):**
+
+```powershell
+& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/trankhacthuan/harness_w_u/main/scripts/install-harness.ps1"))) -Yes
+```
+
+**macOS / Linux / Git Bash:**
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/trankhacthuan/harness_w_u/main/scripts/install-harness.sh?$(date +%s)" | bash -s -- --yes
+```
+
+The installer:
+
+1. Installs the harness (`AGENTS.md`, `docs/`, `scripts/`) into the **current
+   folder** — or, if the terminal is in your home folder, a system folder (for
+   example the Codex app's own install directory), or a read-only location, into
+   a new `~/harness_w_u` folder instead.
+2. Downloads the `harness-cli` binary from the
+   [latest release](https://github.com/trankhacthuan/harness_w_u/releases) and
+   verifies its SHA-256.
+3. Creates the local `harness.db` (`harness-cli init`).
+4. Prints the next step: `cd` into the folder and run `codex` (or open the folder
+   in VS Code / Claude Code — the agent reads `AGENTS.md` automatically).
+
+**Choose the folder yourself** — pass a path:
+
+```powershell
+& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/trankhacthuan/harness_w_u/main/scripts/install-harness.ps1"))) -Yes -Directory "D:\my-site"
+```
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/trankhacthuan/harness_w_u/main/scripts/install-harness.sh" | bash -s -- --yes --directory /path/to/my-site
+```
+
+**Other flags** — `--merge` / `--override` (`-Merge` / `-Override`) resolve
+conflicts with an existing `AGENTS.md` / `docs/` / `scripts/`; `--claude` adds a
+`CLAUDE.md` shim; `--no-cli` / `-NoCli` skips the binary. Full list:
+[`scripts/README.md`](scripts/README.md).
+
+---
+
 ## Overview
 
 | This repo — `harness_w_u` | The design repo — `UX_UI_HARNESS` |
@@ -31,7 +78,10 @@ the first implementation story, not before.
 
 ---
 
-## Getting started
+## Developing this repository
+
+Only needed to work on the harness itself (Rust CLI, installers, docs). To *use*
+the harness, run the one-line install above.
 
 **Prerequisites** — Git, the Rust toolchain ([rustup](https://rustup.rs)), and
 your agent CLI (e.g. Codex). Node.js / pnpm are only needed once the app is
@@ -118,43 +168,24 @@ runtime already provides tool access.
 
 ---
 
-## Reusing the harness in another project
+## Offline install (from a clone)
 
-`scripts/install-harness.*` copies the harness skeleton (`AGENTS.md`, `docs/`,
-`scripts/`) into a different project. Run it from the target project's directory.
-
-### Remote one-liner — requires this repository to be public
-
-The intended way once the repo is shared. Until then the raw URLs return `404`.
-
-```bash
-curl -fsSL "https://raw.githubusercontent.com/trankhacthuan/harness_w_u/main/scripts/install-harness.sh?$(date +%s)" | bash -s -- --yes
-```
-
-```powershell
-& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/trankhacthuan/harness_w_u/main/scripts/install-harness.ps1"))) -Yes
-```
-
-Merge / override / `--claude` / `--directory` variants are in
-[`scripts/README.md`](scripts/README.md).
-
-### Local install — works while the repository is private
-
-```bash
-git clone https://github.com/trankhacthuan/harness_w_u.git
-harness_w_u/scripts/install-harness.sh --directory /path/to/project --yes
-```
+Without network access, install from a local clone — files are copied from the
+clone and a `harness-cli` binary built there is reused:
 
 ```powershell
 git clone https://github.com/trankhacthuan/harness_w_u.git
 .\harness_w_u\scripts\install-harness.ps1 -Directory "D:\path\to\project" -Yes
 ```
 
-The installer copies from the clone with no network and reuses the `harness-cli`
-binary already built there.
+```bash
+git clone https://github.com/trankhacthuan/harness_w_u.git
+harness_w_u/scripts/install-harness.sh --directory /path/to/project --yes
+```
 
-**Flags** — `--no-cli` / `-NoCli` skips the binary; `--merge` or `--override`
-resolves conflicts with an existing `AGENTS.md` / `docs/` / `scripts/`.
+> The one-line install needs this repository to be **public** (the raw URLs
+> return `404` for a private repo) and a published CLI release
+> (`harness-cli-v*` tag → *Harness CLI Release* workflow).
 
 ---
 
