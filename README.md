@@ -178,24 +178,64 @@ runtime already provides tool access.
 
 ---
 
-## Offline install (from a clone)
+## Install from a clone (pinned version)
 
-Without network access, install from a local clone — files are copied from the
-clone and a `harness-cli` binary built there is reused:
+Use this when you want a fixed version of the harness, or you already have the
+clone and no network. Clone **once** into a tools folder **outside** any project,
+then install into each project with `-Directory` / `--directory`.
+
+> Do not clone inside a project: the copy would sit next to the installed files
+> and confuse both you and the agent. The tools folder in the examples is only
+> an example; any folder works.
+
+### Windows (PowerShell)
 
 ```powershell
-git clone https://github.com/trankhacthuan/harness_w_u.git
-.\harness_w_u\scripts\install-harness.ps1 -Directory "D:\path\to\project" -Yes
+git clone https://github.com/trankhacthuan/harness_w_u.git D:\Documents\_tools\harness_w_u
+D:\Documents\_tools\harness_w_u\scripts\install-harness.ps1 -Directory "D:\path\to\project" -Yes
 ```
 
+- Update the clone: `git -C D:\Documents\_tools\harness_w_u pull`
+- If PowerShell blocks the script, run it as
+  `powershell -ExecutionPolicy Bypass -File <script> -Directory "..." -Yes`.
+- Do not paste the `curl … | bash` form into PowerShell: it needs WSL. Use the
+  `.ps1` script, or the bash form inside Git Bash.
+- CLI binary: `harness-cli-windows-x64.exe`.
+
+### macOS
+
 ```bash
-git clone https://github.com/trankhacthuan/harness_w_u.git
-harness_w_u/scripts/install-harness.sh --directory /path/to/project --yes
+git clone https://github.com/trankhacthuan/harness_w_u.git ~/tools/harness_w_u
+bash ~/tools/harness_w_u/scripts/install-harness.sh --directory ~/projects/my-site --yes
 ```
+
+- Needs `git`, `curl`, and `shasum` (macOS provides them; `git` may prompt you
+  to install the Xcode command line tools).
+- CLI binary is chosen by CPU: Apple Silicon → `harness-cli-macos-arm64`,
+  Intel → `harness-cli-macos-x64`.
+- Update the clone: `git -C ~/tools/harness_w_u pull`
+
+### Linux
+
+```bash
+git clone https://github.com/trankhacthuan/harness_w_u.git ~/tools/harness_w_u
+bash ~/tools/harness_w_u/scripts/install-harness.sh --directory ~/projects/my-site --yes
+```
+
+- Needs `git`, `curl`, and `sha256sum` (coreutils).
+- CLI binary: `harness-cli-linux-x64` or `harness-cli-linux-arm64`.
+- Update the clone: `git -C ~/tools/harness_w_u pull`
+
+### Flags (all platforms)
+
+`--merge` / `-Merge` keeps existing files and adds only missing ones;
+`--override` / `-Override` backs up and replaces `AGENTS.md`, `docs/`, and
+`scripts/`; `--no-cli` / `-NoCli` skips the binary.
 
 > The one-line install needs this repository to be **public** (the raw URLs
 > return `404` for a private repo) and a published CLI release
-> (`harness-cli-v*` tag → *Harness CLI Release* workflow).
+> (`harness-cli-v*` tag → *Harness CLI Release* workflow). A clone install does
+> not need a published release if the clone already contains a built binary.
 
 ---
 

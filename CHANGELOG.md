@@ -20,6 +20,8 @@
   and "not verified" as an explicit status until real database tests run.
 - Tests use a separate `TEST_DATABASE_URL` and abort if it is unset or equals
   `DATABASE_URL`; every `.env*` file is git-ignored except `.env.example`.
+- README: install-from-a-clone section now says to clone once into a tools folder
+  outside any project, with Windows, macOS, and Linux notes.
 - Installer: one-line install works from any folder (falls back to
   `~/harness_w_u`), runs `harness-cli init`, and now ships the new docs and the
   previously missing `QUICKSTART.md`, `PRODUCT.md`, and decisions 0008–0011.
