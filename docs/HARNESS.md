@@ -412,6 +412,10 @@ Required checks per lane:
 | normal | `validate:quick`; `test:e2e` when a user-visible flow changes; `design:review` when a page or component changes appearance |
 | high-risk | `test:release` + `design:review` |
 
+If a required check cannot run — for example there is no PostgreSQL instance
+for `test:integration` — report it as **not verified** and keep the story open.
+Never substitute mocks or claim the check passed.
+
 Anything that stores personal data, changes the schema, or touches the database
 is high-risk. A migration that drops or rewrites data needs a decision record
 and explicit owner confirmation.

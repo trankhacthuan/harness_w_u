@@ -12,8 +12,10 @@ bash equivalents follow.
 | Node.js LTS + pnpm | the web app and its checks (once scaffolded) | `node --version`, `pnpm --version` |
 | PostgreSQL 16+ (Docker, native, or hosted) | database stories and integration tests | `psql --version` |
 
-Node.js, pnpm, and PostgreSQL are not required to use the Harness CLI itself or
-to edit docs; they are required before the first implementation story.
+Node.js and pnpm are not required to use the Harness CLI itself or to edit docs;
+they are required before the first implementation story. PostgreSQL is required
+only for the features that use the database (for example reservations) and for
+`test:integration`: the rest of the site builds and runs without it.
 
 ## 1. Build the Harness CLI
 

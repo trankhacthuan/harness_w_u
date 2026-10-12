@@ -113,10 +113,16 @@ rather than re-validating raw strings.
 ## Database
 
 Rules are in `docs/decisions/0011-postgresql-database.md`. In short: forward-only
-reviewed migrations, `DATABASE_URL` parsed at startup, parameterized access
-only, least-privilege role, no personal data in logs, tests against a real
-PostgreSQL instance. Only `lib/data` and `db` talk to the database; route
-handlers call repositories, never SQL.
+reviewed migrations, `DATABASE_URL` validated lazily on first use (never at
+startup or import), parameterized access only, least-privilege role, no personal
+data in logs, tests against a real PostgreSQL instance. Only `lib/data` and `db`
+talk to the database; route handlers call repositories, never SQL.
+
+Degradation: pages that need no data neither import the database module nor
+query it at build time. If the database is missing or unreachable, only the
+features that need it are disabled — the API answers `503` and the reservation
+form shows a message plus a call button — and the rest of the site keeps
+working.
 
 ## Rendering And SEO
 

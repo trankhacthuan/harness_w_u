@@ -62,7 +62,7 @@ Trang phụ: /menu (chia danh mục, dễ đọc trên điện thoại), /about,
 # KỸ THUẬT
 - Stack cố định theo repo (`docs/decisions/0009-web-stack.md`, `0011-postgresql-database.md`): Next.js (App Router) + TypeScript, CSS Modules + CSS variables, PostgreSQL. Không phụ thuộc thư viện nặng không cần thiết.
 - Mobile-first, responsive; ưu tiên tốc độ: ảnh lazy-load, đúng kích thước, width/height khai báo để tránh layout shift. Ngân sách hiệu năng theo `docs/DESIGN.md`.
-- Form đặt bàn: validate phía client và phía server (tên, SĐT VN, số khách, ngày giờ không ở quá khứ), thông báo lỗi dễ hiểu, trạng thái loading/thành công/thất bại. Gửi tới route nội bộ `/api/reservations` và lưu vào PostgreSQL. Không gọi dịch vụ ngoài (email, Zalo, Maps API).
+- Form đặt bàn: validate phía client và phía server (tên, SĐT VN, số khách, ngày giờ không ở quá khứ), thông báo lỗi dễ hiểu, trạng thái loading/thành công/thất bại. Gửi tới route nội bộ `/api/reservations` và lưu vào PostgreSQL. Không gọi dịch vụ ngoài (email, Zalo, Maps API). Nếu chưa kết nối được database, API trả 503, form hiện thông báo kèm nút gọi [SĐT], các trang khác vẫn hoạt động bình thường; phần đặt bàn ghi rõ "chưa kiểm chứng với PostgreSQL" cho đến khi chạy được test thật.
 - Google Maps: dùng link/chỉ đường từ [LINK], không dùng API.
 - A11y: HTML ngữ nghĩa, alt text, focus visible, điều hướng bàn phím, label cho mọi input, hit area tối thiểu 44px.
 - SEO: title, meta description, heading đúng cấp, Open Graph, JSON-LD schema Restaurant (chỉ điền trường đã có dữ liệu).

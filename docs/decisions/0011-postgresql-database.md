@@ -46,6 +46,19 @@ Rules:
    (see Follow-Up) and must be decided by the owner, not assumed.
 8. **Tests use a real database.** Integration tests run against a throwaway
    PostgreSQL instance; mocks do not count as database proof.
+9. **The site must not depend on the database to start.** `DATABASE_URL` is
+   validated lazily, the first time the data layer is used — never at process
+   start or module import. Pages that need no data must not import the database
+   module, and no page queries the database during `next build` or static
+   generation. A missing or unreachable database only disables the features
+   that need it.
+10. **Fail visibly and kindly.** When the database is unavailable, the API
+    returns `503` with a stable error shape; the reservation form shows a clear
+    message and a call button (`tel:`) instead of failing silently or crashing.
+11. **Unverified is a real status.** Until the integration tests have run
+    against a real PostgreSQL instance, the story that depends on it is
+    reported as **not verified** and stays open. Code written without a
+    database to run against is allowed; claiming it works is not.
 
 Reading data back (for staff) is done with a SQL client or an export script. A
 web admin screen needs authentication and is a separate decision.

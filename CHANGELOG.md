@@ -15,6 +15,9 @@
   `docs/templates/brief-restaurant.md` (restaurant site brief).
 - Validation ladder extended with integration (real PostgreSQL), performance
   (Lighthouse budget), and a design review gate.
+- The site must not depend on PostgreSQL to start: lazy `DATABASE_URL`
+  validation, no database access at build time, `503` + call-button fallback,
+  and "not verified" as an explicit status until real database tests run.
 - Installer: one-line install works from any folder (falls back to
   `~/harness_w_u`), runs `harness-cli init`, and now ships the new docs and the
   previously missing `QUICKSTART.md`, `PRODUCT.md`, and decisions 0008–0011.
