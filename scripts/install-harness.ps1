@@ -458,6 +458,7 @@ $files = @(
     "docs/decisions/0009-web-stack.md",
     "docs/decisions/0010-single-repo-design-ownership.md",
     "docs/decisions/0011-postgresql-database.md",
+    "docs/decisions/0012-project-structure.md",
     "docs/decisions/README.md",
     "docs/product/README.md",
     "docs/product/MISSING.md",

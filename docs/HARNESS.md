@@ -379,7 +379,8 @@ scaffolded they do not exist yet and must not be claimed as passing.
 
 ```text
 validate:quick   pnpm lint && pnpm typecheck && pnpm test
-  Prettier check, ESLint (incl. jsx-a11y), tsc --noEmit, Vitest unit/component.
+  Prettier check, ESLint (incl. jsx-a11y and the import-boundary rules from
+  docs/ARCHITECTURE.md), tsc --noEmit, Vitest unit/component.
 
 test:integration pnpm db:migrate:test && pnpm test:integration
   Apply every migration to the empty database in TEST_DATABASE_URL (aborts if

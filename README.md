@@ -142,7 +142,7 @@ CLAUDE.md              Claude Code shim; imports AGENTS.md + FEATURE_INTAKE.md.
 docs/
   HARNESS.md           Collaboration model and validation ladder.
   FEATURE_INTAKE.md    Risk classification and lanes.
-  ARCHITECTURE.md      Next.js + PostgreSQL architecture and layering rules.
+  ARCHITECTURE.md      Project layout (feature-first), import rules, data flow.
   DESIGN.md            Art direction, tokens, motion, performance, design review.
   CONTENT_RULES.md     No invented facts; placeholders and the missing ledger.
   CONTEXT_RULES.md     What to read, per lane and phase.

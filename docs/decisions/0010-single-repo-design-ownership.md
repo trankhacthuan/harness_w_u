@@ -26,8 +26,8 @@ This repository owns the whole product:
 | Product definition and brief | `docs/product/PRODUCT.md` |
 | Content integrity (no fabricated facts) | `docs/CONTENT_RULES.md`, `docs/product/MISSING.md` |
 | Art direction, tokens, motion, performance budget | `docs/DESIGN.md`, `app/styles/tokens.css` |
-| Components and pages | `app/`, `components/` (CSS Modules) |
-| Behavior, data, validation | `lib/`, `server/`, `db/` |
+| Components and pages | `app/`, `features/*/components`, `components/` (CSS Modules) |
+| Behavior, data, validation | `features/*/domain`, `features/*/server`, `db/` (`0012-project-structure.md`) |
 | Proof | the validation ladder in `docs/HARNESS.md` |
 
 Rules carried over from `UX_UI_HARNESS` (they are the valuable part):

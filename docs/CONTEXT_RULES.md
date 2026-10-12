@@ -93,6 +93,7 @@ Read to leave useful evidence for the next agent and for benchmark scoring.
 | Task touches auth, authorization, audit/security, data loss, or external providers | Treat as high-risk, read `docs/templates/high-risk-story/*`, and check prior decisions before implementation. |
 | Task changes public API shape, product behavior, or user-visible workflow | Read relevant `docs/product/*`, story packets, and validation expectations before editing. |
 | Task adds or restyles a page, component, copy, or motion | Read `docs/DESIGN.md`, `docs/CONTENT_RULES.md`, and `docs/product/PRODUCT.md`; update `docs/product/MISSING.md` when placeholders change. |
+| Task adds a feature, moves files, or creates a folder | Read `docs/ARCHITECTURE.md` (Project Shape, Dependency Rule) and `docs/decisions/0012-project-structure.md`; a new top-level folder needs a decision. |
 | Task touches the product database, migrations, or personal data | Treat as high-risk; read `docs/decisions/0011-postgresql-database.md` and `docs/ARCHITECTURE.md` (Database) before planning. |
 | Task changes Harness policy, source hierarchy, risk classification, or validation requirements | Read `docs/HARNESS.md`, `docs/FEATURE_INTAKE.md`, `docs/ARCHITECTURE.md`, and `docs/decisions/*`; pause if direction is ambiguous. |
 | Task discovers repeated confusion, stale docs, or missing proof | Read `docs/HARNESS_BACKLOG.md`, record `harness_friction`, and add a backlog item when the fix is out of scope. |

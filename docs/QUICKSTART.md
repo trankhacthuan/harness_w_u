@@ -81,8 +81,10 @@ pnpm create next-app@latest . --ts --app --eslint --use-pnpm
 
 Then wire `lint`, `typecheck` (`tsc --noEmit`), `test` (Vitest), `test:e2e`
 (Playwright + `@axe-core/playwright`), `test:perf` (Lighthouse), and the `db:*`
-scripts in `package.json`; create `app/styles/tokens.css`; record the setup in
-the story's evidence.
+scripts in `package.json`; create `app/styles/tokens.css`; lay out folders per
+`docs/ARCHITECTURE.md` and wire the import-boundary lint rules and the
+`server-only` guard (`docs/decisions/0012-project-structure.md`); record the
+setup in the story's evidence.
 
 ### Database credentials
 

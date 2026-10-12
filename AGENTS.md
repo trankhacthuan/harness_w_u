@@ -41,7 +41,11 @@ the first implementation story needs it.
    stopping points, follow them; the harness workflow fills the gaps.
 6. **No unrequested external APIs.** Social login, email/SMS delivery, maps
    APIs, and payments are separate stories that need an explicit request.
-7. **Report honestly.** State what was verified with which command, and what was
+7. **Put code where the architecture says.** Follow `docs/ARCHITECTURE.md`
+   (feature-first layout, import rules, data flow). Pages never call the
+   database; business rules live in `domain/`. A new top-level folder needs a
+   decision record (`docs/decisions/0012-project-structure.md`).
+8. **Report honestly.** State what was verified with which command, and what was
    not attempted.
 
 ## Operational tool

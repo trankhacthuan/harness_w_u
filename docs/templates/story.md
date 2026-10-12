@@ -24,10 +24,11 @@ Describe the behavior this story must make true.
 
 ## Design Notes
 
+- Feature module(s) touched or created (`features/<name>/`):
 - Routes / rendering mode (static / ISR / SSR / client):
 - Data sources and boundary inputs (parse-first):
 - Server vs Client Components:
-- Server actions / route handlers:
+- Server actions / use cases / repositories (`features/<name>/server`):
 - Domain types and rules:
 - SEO metadata needs:
 
