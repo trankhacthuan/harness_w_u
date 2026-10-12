@@ -18,6 +18,8 @@
 - The site must not depend on PostgreSQL to start: lazy `DATABASE_URL`
   validation, no database access at build time, `503` + call-button fallback,
   and "not verified" as an explicit status until real database tests run.
+- Tests use a separate `TEST_DATABASE_URL` and abort if it is unset or equals
+  `DATABASE_URL`; every `.env*` file is git-ignored except `.env.example`.
 - Installer: one-line install works from any folder (falls back to
   `~/harness_w_u`), runs `harness-cli init`, and now ships the new docs and the
   previously missing `QUICKSTART.md`, `PRODUCT.md`, and decisions 0008–0011.
