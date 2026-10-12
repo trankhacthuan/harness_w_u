@@ -104,7 +104,7 @@ Mark one flag for each item that applies:
 | Auth | login, logout, sessions, JWT, password, refresh token |
 | Authorization | roles, permissions, tenant or company scope |
 | Data model | schema, migrations, uniqueness, deletion, retention |
-| Audit/security | audit logs, privacy, sensitive data, access logs |
+| Audit/security | audit logs, privacy, sensitive data (including storing names, phone numbers, or emails), access logs |
 | External systems | email, payments, cloud services, provider SDKs, queues, webhooks |
 | Public contracts | API shape, response envelope, client-visible behavior |
 | Cross-platform | desktop/mobile/browser split, native shell behavior, deep links |

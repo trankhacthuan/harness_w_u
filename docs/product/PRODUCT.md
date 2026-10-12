@@ -1,10 +1,12 @@
 # Product Brief
 
-Canonical description of the product this repo builds. The separate UI/UX
-repository reads this file to choose a visual style that fits the product.
-See `docs/decisions/0008-ui-ux-boundary.md`.
+Canonical description of the product this repo builds. Design and
+implementation both start from this file (`docs/DESIGN.md`,
+`docs/decisions/0010-single-repo-design-ownership.md`). For a restaurant site,
+fill `docs/templates/brief-restaurant.md` and mirror the facts here.
 
-Keep this file current. If any section changes, tell the UI/UX repo.
+Keep this file current. Content gaps are placeholders listed in
+`docs/product/MISSING.md` (`docs/CONTENT_RULES.md`).
 
 > Status: TEMPLATE — fill in when the first real product is chosen.
 
@@ -56,9 +58,9 @@ Keep this file current. If any section changes, tell the UI/UX repo.
 
 - Personality in 3–5 adjectives (e.g. calm, precise, friendly, bold, minimal):
 - What it should NOT feel like:
-- Reference sites / products the user likes (for the UI/UX repo):
+- Reference sites / products the user likes (learn structure, do not copy):
 
-## 9. Brand and style direction (hints for the UI/UX repo)
+## 9. Brand and style direction
 
 - Existing brand assets? (logo, colors, fonts) — link or "none":
 - Density: airy / balanced / compact
@@ -77,7 +79,9 @@ Keep this file current. If any section changes, tell the UI/UX repo.
 
 ## 11. Explicitly out of scope
 
-- Visual design system, theming, and brand expression — owned by the UI/UX repo.
+- Third-party feature APIs (social login, email/SMS delivery, maps APIs,
+  payments) unless a story explicitly adds them.
+- Authentication and an admin UI unless a story explicitly adds them.
 - <Other non-goals.>
 
 ## 12. Open questions

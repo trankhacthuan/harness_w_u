@@ -67,12 +67,14 @@ Harness v0 includes:
 - Test matrix placeholder.
 - Harness growth backlog.
 - Durable layer: SQLite database and CLI for operational records.
+- A locked default web stack and database (`docs/decisions/0009-web-stack.md`,
+  `0011-postgresql-database.md`) and a single-repo design and content policy
+  (`docs/DESIGN.md`, `docs/CONTENT_RULES.md`).
 
 Harness v0 deliberately excludes:
 
 - A project-specific `SPEC.md`.
 - Pre-sliced product domains.
-- A locked application stack.
 - App source scaffolding.
 - Package scripts.
 - Test runner config.
@@ -326,9 +328,9 @@ validation changes, record the decision in both places:
 
 ```bash
 scripts/bin/harness-cli decision add \
-  --id 0008-auth-boundary \
+  --id NNNN-auth-boundary \
   --title "Auth Boundary" \
-  --doc docs/decisions/0008-auth-boundary.md \
+  --doc docs/decisions/NNNN-auth-boundary.md \
   --notes "Accepted during T4 authentication work."
 ```
 
@@ -370,23 +372,36 @@ A task is done only when:
 
 ## Validation Ladder
 
-Stack: Next.js + TypeScript + pnpm (`docs/decisions/0009-web-stack.md`). The
-`pnpm` scripts below are wired by the first implementation story; until the app
-is scaffolded they do not exist yet and must not be claimed as passing.
+Stack: Next.js + TypeScript + pnpm + PostgreSQL
+(`docs/decisions/0009-web-stack.md`, `0011-postgresql-database.md`). The `pnpm`
+scripts below are wired by the first implementation story; until the app is
+scaffolded they do not exist yet and must not be claimed as passing.
 
 ```text
 validate:quick   pnpm lint && pnpm typecheck && pnpm test
   Prettier check, ESLint (incl. jsx-a11y), tsc --noEmit, Vitest unit/component.
 
+test:integration pnpm db:migrate:test && pnpm test:integration
+  Apply every migration to an empty throwaway PostgreSQL, then run Vitest
+  integration tests against it. Mocks do not count as database proof.
+
 test:e2e         pnpm test:e2e
-  Playwright user flows + @axe-core/playwright accessibility assertions.
+  Playwright user flows + @axe-core/playwright accessibility assertions, at
+  375px and desktop, plus a prefers-reduced-motion run.
+
+test:perf        pnpm test:perf
+  Lighthouse against the budget in docs/DESIGN.md (LCP, CLS, INP).
 
 test:platform    pnpm build
   Next.js production build succeeds; no type or route errors.
 
-test:release     pnpm lint && pnpm typecheck && pnpm test && pnpm test:e2e && pnpm build
-  Full suite before a deploy story; add a Lighthouse/perf-budget check when a
-  hosting decision exists.
+test:release     pnpm lint && pnpm typecheck && pnpm test && pnpm db:migrate:test \
+                 && pnpm test:integration && pnpm test:e2e && pnpm test:perf && pnpm build
+  Full suite before a deploy story.
+
+design:review    docs/DESIGN.md section 8
+  Six-question review with cited evidence; content scan against
+  docs/CONTENT_RULES.md; docs/product/MISSING.md is current.
 ```
 
 Required checks per lane:
@@ -394,8 +409,14 @@ Required checks per lane:
 | Lane | Must run |
 | --- | --- |
 | tiny | `pnpm lint` + `pnpm typecheck` on touched files |
-| normal | `validate:quick`, plus `test:e2e` when a user-visible flow changes |
-| high-risk | `test:release` |
+| normal | `validate:quick`; `test:e2e` when a user-visible flow changes; `design:review` when a page or component changes appearance |
+| high-risk | `test:release` + `design:review` |
+
+Anything that stores personal data, changes the schema, or touches the database
+is high-risk. A migration that drops or rewrites data needs a decision record
+and explicit owner confirmation.
 
 Agents must not claim a command passed until it exists and has been run, and
-must paste the command output into the trace / story evidence.
+must paste the command output into the trace / story evidence. Smoothness of
+motion on a real device is a human check; report measured numbers, not
+impressions.

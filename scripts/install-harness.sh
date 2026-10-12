@@ -927,6 +927,8 @@ done <<'EOF'
 AGENTS.md
 README.md
 docs/ARCHITECTURE.md
+docs/CONTENT_RULES.md
+docs/DESIGN.md
 docs/CONTEXT_RULES.md
 docs/FEATURE_INTAKE.md
 docs/GLOSSARY.md
@@ -936,6 +938,7 @@ docs/HARNESS_BACKLOG.md
 docs/HARNESS_COMPONENTS.md
 docs/HARNESS_MATURITY.md
 docs/IMPROVEMENT_PROTOCOL.md
+docs/QUICKSTART.md
 docs/README.md
 docs/TEST_MATRIX.md
 docs/TOOL_REGISTRY.md
@@ -947,11 +950,18 @@ docs/decisions/0004-sqlite-durable-layer.md
 docs/decisions/0005-prebuilt-rust-harness-cli.md
 docs/decisions/0006-phase-4-benchmark-triage.md
 docs/decisions/0007-improvement-proposal-rules.md
+docs/decisions/0008-ui-ux-boundary.md
+docs/decisions/0009-web-stack.md
+docs/decisions/0010-single-repo-design-ownership.md
+docs/decisions/0011-postgresql-database.md
 docs/decisions/README.md
 docs/product/README.md
+docs/product/MISSING.md
+docs/product/PRODUCT.md
 docs/stories/README.md
 docs/stories/backlog.md
 docs/templates/decision.md
+docs/templates/brief-restaurant.md
 docs/templates/spec-intake.md
 docs/templates/story.md
 docs/templates/validation-report.md

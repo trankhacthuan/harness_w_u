@@ -4,7 +4,8 @@ Date: 2026-09-01
 
 ## Status
 
-Accepted
+Superseded by `0010-single-repo-design-ownership.md` (2026-10-12). Kept for
+history; do not apply.
 
 ## Context
 

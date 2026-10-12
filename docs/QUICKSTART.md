@@ -3,10 +3,22 @@
 First-run setup for `harness_w_u`. Windows / PowerShell is the primary path;
 bash equivalents follow.
 
+## 0. Prerequisites
+
+| Tool | Needed for | Check |
+| --- | --- | --- |
+| Git | version control | `git --version` |
+| Rust toolchain (`rustup`) | building the Harness CLI | `cargo --version` |
+| Node.js LTS + pnpm | the web app and its checks (once scaffolded) | `node --version`, `pnpm --version` |
+| PostgreSQL 16+ (Docker, native, or hosted) | database stories and integration tests | `psql --version` |
+
+Node.js, pnpm, and PostgreSQL are not required to use the Harness CLI itself or
+to edit docs; they are required before the first implementation story.
+
 ## 1. Build the Harness CLI
 
-The binary is git-ignored, so every clone builds it once. Needs the Rust
-toolchain (`rustup` from https://rustup.rs).
+The binary is git-ignored, so every clone builds it once. (The one-line
+installer in `README.md` downloads a prebuilt binary instead.)
 
 PowerShell:
 
@@ -28,7 +40,8 @@ scripts/bin/harness-cli --version
 
 ## 2. Initialize the durable database
 
-`harness.db` is local and git-ignored.
+`harness.db` is the harness's own SQLite record store. It is local and
+git-ignored, and unrelated to the product's PostgreSQL database.
 
 ```powershell
 .\scripts\bin\harness-cli.exe init
@@ -40,7 +53,8 @@ scripts/bin/harness-cli --version
 1. Classify with `docs/FEATURE_INTAKE.md`, record it:
    `.\scripts\bin\harness-cli.exe intake --type <type> --summary "<text>" --lane <tiny|normal|high-risk>`
 2. Read the lane-appropriate context (`docs/CONTEXT_RULES.md`).
-3. For product/UI work, read `docs/product/PRODUCT.md` first.
+3. For product, design, or content work, read `docs/product/PRODUCT.md`,
+   `docs/DESIGN.md`, and `docs/CONTENT_RULES.md` first.
 4. Do the work inside the chosen lane only.
 5. Run the required checks for the lane (see below).
 6. Record a trace: `.\scripts\bin\harness-cli.exe trace --summary "<text>" --outcome <outcome>`
@@ -48,14 +62,14 @@ scripts/bin/harness-cli --version
 
 ## 4. Validation commands
 
-These exist only after the first story scaffolds the Next.js app
+These exist only after the first story scaffolds the app
 (`docs/decisions/0009-web-stack.md`). Do not claim they pass before then.
 
 | Lane | Run |
 | --- | --- |
 | tiny | `pnpm lint` + `pnpm typecheck` |
-| normal | `pnpm lint && pnpm typecheck && pnpm test` (+ `pnpm test:e2e` if a flow changed) |
-| high-risk | `pnpm lint && pnpm typecheck && pnpm test && pnpm test:e2e && pnpm build` |
+| normal | `pnpm lint && pnpm typecheck && pnpm test` (+ `pnpm test:e2e` if a flow changed; + design review if appearance changed) |
+| high-risk | the full `test:release` ladder in `docs/HARNESS.md` + design review |
 
 ## 5. Scaffolding the app (first implementation story only)
 
@@ -64,13 +78,15 @@ pnpm create next-app@latest . --ts --app --eslint --use-pnpm
 ```
 
 Then wire `lint`, `typecheck` (`tsc --noEmit`), `test` (Vitest), `test:e2e`
-(Playwright + `@axe-core/playwright`) in `package.json`, and record the setup in
-the story's evidence. Consume the UI/UX repo's token / class convention — do not
-create a new one here.
+(Playwright + `@axe-core/playwright`), `test:perf` (Lighthouse), and the `db:*`
+scripts in `package.json`; create `app/styles/tokens.css`; record the setup in
+the story's evidence.
 
-## 6. Working with the UI/UX repo
+## 6. Starting a restaurant site
 
-- Keep `docs/product/PRODUCT.md` current; it is what the UI/UX repo designs against.
-- Deliver functional code and `PRODUCT.md` to that repo manually (via Codex).
-- Consume styling back as tokens / class conventions / component specs without
-  re-deriving them (`docs/decisions/0008-ui-ux-boundary.md`).
+1. Fill `docs/templates/brief-restaurant.md` and mirror the facts into
+   `docs/product/PRODUCT.md`.
+2. Give the brief to the agent. Placeholders (`[CẦN BỔ SUNG: …]`) are tracked in
+   `docs/product/MISSING.md`.
+3. The reservation form and its database are a high-risk story; expect a story
+   folder and a decision record before code.

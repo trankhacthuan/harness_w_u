@@ -4,8 +4,8 @@
 
 `harness_w_u` gives an agent (Codex, Claude Code) the project context it needs
 *before* it edits code: what the product is, what to read first, how risky a
-change is, and what proof "done" requires. Functional implementation and
-validation live here; visual design lives in a separate repository.
+change is, and what proof "done" requires. Brief, visual design, front end,
+back end, database, and validation all live in this one repository.
 
 Forked from [`hoangnb24/repository-harness`](https://github.com/hoangnb24/repository-harness)
 (MIT).
@@ -61,20 +61,25 @@ conflicts with an existing `AGENTS.md` / `docs/` / `scripts/`; `--claude` adds a
 
 ## Overview
 
-| This repo — `harness_w_u` | The design repo — `UX_UI_HARNESS` |
+One repository takes a brief to a finished site — no separate design repo and no
+manual hand-off (`docs/decisions/0010-single-repo-design-ownership.md`).
+
+| Concern | Where |
 | --- | --- |
-| Product definition (`docs/product/PRODUCT.md`) | Visual language, design tokens, component styling |
-| Routes, pages, data, and state (loading / empty / error) | The look and feel of those states |
-| Semantic, accessible, responsive markup | CSS, theme, motion, brand |
-| Functional and accessibility validation | Visual review |
+| Product brief | `docs/product/PRODUCT.md`, `docs/templates/brief-restaurant.md` |
+| Art direction, tokens, motion, performance budget | `docs/DESIGN.md` |
+| Content integrity (no invented facts) | `docs/CONTENT_RULES.md`, `docs/product/MISSING.md` |
+| Front end and back end | Next.js App Router, CSS Modules |
+| Database | PostgreSQL via Drizzle (`docs/decisions/0011-postgresql-database.md`) |
+| Proof | validation ladder in `docs/HARNESS.md` |
 
-`docs/product/PRODUCT.md` is the contract between the two repos: the design repo
-reads it to choose a style that fits the product
-(`docs/decisions/0008-ui-ux-boundary.md`).
+**Stack** — Next.js (App Router) + TypeScript + pnpm, CSS Modules + CSS
+variables, PostgreSQL, tested with Vitest, Playwright, and Lighthouse
+(`docs/decisions/0009-web-stack.md`). The application is scaffolded by the first
+implementation story, not before.
 
-**Stack** — Next.js (App Router) + TypeScript + pnpm, tested with Vitest and
-Playwright (`docs/decisions/0009-web-stack.md`). The application is scaffolded by
-the first implementation story, not before.
+> `UX_UI_HARNESS` (a separate design-system repository) is an optional reference.
+> Nothing here depends on it.
 
 ---
 
@@ -84,8 +89,8 @@ Only needed to work on the harness itself (Rust CLI, installers, docs). To *use*
 the harness, run the one-line install above.
 
 **Prerequisites** — Git, the Rust toolchain ([rustup](https://rustup.rs)), and
-your agent CLI (e.g. Codex). Node.js / pnpm are only needed once the app is
-scaffolded.
+your agent CLI (e.g. Codex). Node.js + pnpm and PostgreSQL are only needed once
+the app is scaffolded (`docs/QUICKSTART.md`).
 
 ```powershell
 # 1. Clone
@@ -117,11 +122,13 @@ Every request passes through intake before code changes:
 ```text
 product idea
   │
-  ├─ docs/product/PRODUCT.md ....... the brief the design repo works against
+  ├─ docs/product/PRODUCT.md ....... the brief; gaps tracked in MISSING.md
   ├─ feature intake ............... tiny / normal / high-risk   (docs/FEATURE_INTAKE.md)
   ├─ story packet ................. one vertical slice          (docs/templates/story.md)
-  ├─ implementation .............. function + a11y; no bespoke styling
-  ├─ validation ladder ........... lint · typecheck · test · e2e  (docs/HARNESS.md)
+  ├─ design decisions ............ type · color · layout idea  (docs/DESIGN.md)
+  ├─ implementation .............. front end · back end · database
+  ├─ validation ladder ........... lint · types · tests · e2e · perf  (docs/HARNESS.md)
+  ├─ design review ............... six questions, cited evidence
   └─ trace + decision ............ evidence for the next agent
 ```
 
@@ -135,10 +142,13 @@ CLAUDE.md              Claude Code shim; imports AGENTS.md + FEATURE_INTAKE.md.
 docs/
   HARNESS.md           Collaboration model and validation ladder.
   FEATURE_INTAKE.md    Risk classification and lanes.
-  ARCHITECTURE.md      Next.js architecture and the UI/UX boundary.
+  ARCHITECTURE.md      Next.js + PostgreSQL architecture and layering rules.
+  DESIGN.md            Art direction, tokens, motion, performance, design review.
+  CONTENT_RULES.md     No invented facts; placeholders and the missing ledger.
   CONTEXT_RULES.md     What to read, per lane and phase.
   QUICKSTART.md        First-run setup.
   product/PRODUCT.md   The product brief.
+  product/MISSING.md   Content and assets still needed from the owner.
   decisions/           Durable decisions (ADRs).
   stories/             Story packets and backlog.
   templates/           Story, decision, and validation templates.

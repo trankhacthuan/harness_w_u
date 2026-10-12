@@ -8,15 +8,19 @@ future user-provided spec.
 - `HARNESS.md`: how humans and agents collaborate.
 - `FEATURE_INTAKE.md`: how prompts become tiny, normal, or high-risk work.
 - `ARCHITECTURE.md`: architecture discovery and boundary rules.
-- `TEST_MATRIX.md`: legacy proof map; current proof status is queried with
-  `scripts/bin/harness-cli query matrix`.
+- `DESIGN.md`: art direction, tokens, motion, performance budget, design review.
+- `CONTENT_RULES.md`: no invented facts; placeholders and the missing ledger.
+- `QUICKSTART.md`: first-run setup.
+- `TEST_MATRIX.md`: proof map and per-lane checks; current proof status is
+  queried with `scripts/bin/harness-cli query matrix`.
 - `HARNESS_BACKLOG.md`: legacy improvement list; current improvement records
   are stored with `scripts/bin/harness-cli backlog`.
 - `GLOSSARY.md`: shared terms.
 
 ## Folders
 
-- `product/`: current product truth, empty until a spec is derived.
+- `product/`: the product brief (`PRODUCT.md`) and the missing-content ledger
+  (`MISSING.md`).
 - `stories/`: feature packets and backlog.
 - `decisions/`: durable decisions and tradeoffs.
 - `demo/`: concrete walkthroughs that show how the harness transforms input

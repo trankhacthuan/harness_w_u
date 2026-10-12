@@ -1,8 +1,9 @@
 # Product Docs
 
 `PRODUCT.md` is the canonical product brief. It describes what this repo builds
-and is the file the separate UI/UX repository reads to choose a visual style
-(see `docs/decisions/0008-ui-ux-boundary.md`). Keep it current.
+and is the starting point for design (`docs/DESIGN.md`) and implementation. Keep
+it current. `MISSING.md` is the ledger of content and assets still needed from
+the owner (`docs/CONTENT_RULES.md`).
 
 When a spec grows past a single brief, derive smaller product contract files
 here and name them by the product domains that actually exist, for example

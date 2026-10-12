@@ -1,23 +1,27 @@
 # Architecture
 
-Stack is locked in `docs/decisions/0009-web-stack.md`:
-**Next.js (App Router) + TypeScript (strict) + pnpm**, tests with
-Vitest + Playwright.
+Stack is locked in `docs/decisions/0009-web-stack.md` and
+`docs/decisions/0011-postgresql-database.md`:
+**Next.js (App Router) + TypeScript (strict) + pnpm**, CSS Modules + CSS
+variables, **PostgreSQL** via Drizzle ORM, tests with Vitest + Playwright.
 
 The app is **not scaffolded yet**. Create real folders and run `create-next-app`
 only when the first implementation story needs them.
 
-## UI/UX Boundary
+## Design And Content
 
-Visual design lives in a separate repository (`docs/decisions/0008-ui-ux-boundary.md`).
-In this repo:
+This repository owns the visual design too
+(`docs/decisions/0010-single-repo-design-ownership.md`). The rules live in
+`docs/DESIGN.md` and `docs/CONTENT_RULES.md`. For architecture purposes:
 
-- Write semantic, accessible markup. Structure and behavior are the deliverable.
-- Do not invent a design system, color palette, spacing scale, or component
-  look. Consume whatever token / class convention the UI/UX repo provides.
+- Styling is CSS Modules reading tokens from `app/styles/tokens.css`. No raw
+  design values inside components.
 - Every async surface ships explicit `loading`, `empty`, and `error` states.
-- Layout is responsive at the structural level (fluid containers, no fixed pixel
+- Layout is mobile-first and responsive (fluid containers, no fixed pixel
   widths that break at 320px).
+- Motion is CSS plus `IntersectionObserver`; only `transform` and `opacity`
+  animate.
+- Content gaps are visible placeholders tracked in `docs/product/MISSING.md`.
 
 ## Discovery Before Shape
 
@@ -45,14 +49,21 @@ app/                      Next.js App Router routes
     loading.tsx
     error.tsx
     not-found.tsx
-components/                presentational components (styled per UI/UX repo)
+  styles/
+    tokens.css            design tokens (CSS custom properties)
+    global.css            reset and base styles
+components/               presentational components (CSS Modules)
 lib/
   domain/                 pure product types and rules (framework-free)
-  data/                   fetchers / repositories, parse at the edge
+  data/                   repositories over the database, parse at the edge
   validation/             zod (or equivalent) schemas for boundary input
+db/
+  schema.ts               Drizzle schema
+  migrations/             forward-only SQL migrations (committed)
 server/                   route handlers, server actions
 tests/
   unit/                   Vitest
+  integration/            Vitest against a throwaway PostgreSQL
   e2e/                    Playwright (+ @axe-core/playwright)
 ```
 
@@ -69,7 +80,7 @@ Inner layers must not depend on outer layers.
 | Layer | May depend on | Must not depend on |
 | --- | --- | --- |
 | `lib/domain` | tiny pure utilities only | Next.js, React, fetch, env, DB clients |
-| `lib/data`, `lib/validation` | `lib/domain` | React components, route handlers |
+| `lib/data`, `lib/validation`, `db` | `lib/domain` | React components, route handlers |
 | `server` | domain, data, validation | React component internals, browser APIs |
 | `app` routes / `components` | server contracts, domain types | direct DB access, secrets |
 
@@ -98,6 +109,14 @@ rather than re-validating raw strings.
   Components. Pass data down as serializable props.
 - Mutations go through Server Actions or route handlers, which own validation
   and any audit side effects.
+
+## Database
+
+Rules are in `docs/decisions/0011-postgresql-database.md`. In short: forward-only
+reviewed migrations, `DATABASE_URL` parsed at startup, parameterized access
+only, least-privilege role, no personal data in logs, tests against a real
+PostgreSQL instance. Only `lib/data` and `db` talk to the database; route
+handlers call repositories, never SQL.
 
 ## Rendering And SEO
 

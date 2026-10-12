@@ -41,7 +41,10 @@ Fill this when the story adds or changes a route. Delete it for non-UI stories.
 - [ ] Keyboard navigable, visible focus, correct landmarks/headings
 - [ ] Labels / alt text / ARIA where needed (`jsx-a11y` clean, axe clean)
 - [ ] Responsive 320px → wide desktop, no horizontal scroll
-- [ ] Uses the UI/UX repo's token / class convention, no bespoke styling
+- [ ] Values come from `app/styles/tokens.css`; no raw design values in the CSS Module
+- [ ] Motion animates only `transform`/`opacity` and respects reduced motion
+- [ ] Design review answered with evidence (`docs/DESIGN.md` section 8)
+- [ ] No invented content; placeholders listed in `docs/product/MISSING.md`
 - [ ] `metadata` exported if the route is indexable
 - [ ] Forms: client + server validation, error summary, success path
 
