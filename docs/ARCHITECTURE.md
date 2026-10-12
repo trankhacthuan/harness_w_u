@@ -63,7 +63,7 @@ db/
 server/                   route handlers, server actions
 tests/
   unit/                   Vitest
-  integration/            Vitest against a throwaway PostgreSQL
+  integration/            Vitest against TEST_DATABASE_URL (a separate database)
   e2e/                    Playwright (+ @axe-core/playwright)
 ```
 

@@ -84,6 +84,20 @@ Then wire `lint`, `typecheck` (`tsc --noEmit`), `test` (Vitest), `test:e2e`
 scripts in `package.json`; create `app/styles/tokens.css`; record the setup in
 the story's evidence.
 
+### Database credentials
+
+Put them in `.env.local` (git-ignored; never paste them into chat or commit
+them). Keep two separate databases — the second is wiped by the tests:
+
+```
+DATABASE_URL=postgresql://<user>:<password>@<host>:5432/<database>
+TEST_DATABASE_URL=postgresql://<user>:<password>@<host>:5432/<database>_test
+```
+
+Hosted providers usually need `?sslmode=require` at the end of the URL. Use an
+application role that is not a superuser. The first data story adds a committed
+`.env.example` containing placeholders only.
+
 ## 6. Starting a restaurant site
 
 1. Fill `docs/templates/brief-restaurant.md` and mirror the facts into

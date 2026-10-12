@@ -23,7 +23,7 @@ hard gate in `docs/FEATURE_INTAKE.md` (Audit/security).
 | Driver | `pg` (node-postgres) |
 | Data access | Drizzle ORM (TypeScript, SQL-first) |
 | Migrations | `drizzle-kit`; plain SQL files committed under `db/migrations/` |
-| Connection | `DATABASE_URL` environment variable |
+| Connection | `DATABASE_URL` (the real database) and `TEST_DATABASE_URL` (a separate, disposable database used only by tests) |
 | Local development | Docker `postgres` image, a native install, or a hosted instance |
 | Admin UI / authentication | Out of scope |
 
@@ -44,8 +44,11 @@ Rules:
 7. **Personal data is minimized.** Collect only fields the product uses; never
    write personal data to logs. The retention period is an open question
    (see Follow-Up) and must be decided by the owner, not assumed.
-8. **Tests use a real database.** Integration tests run against a throwaway
-   PostgreSQL instance; mocks do not count as database proof.
+8. **Tests use a real, separate database.** Integration tests run against the
+   database named by `TEST_DATABASE_URL`, which is created, migrated, and wiped
+   by the tests. Mocks do not count as database proof. The test runner must
+   **abort** if `TEST_DATABASE_URL` is unset or resolves to the same database as
+   `DATABASE_URL`, so tests can never touch real reservation data.
 9. **The site must not depend on the database to start.** `DATABASE_URL` is
    validated lazily, the first time the data layer is used — never at process
    start or module import. Pages that need no data must not import the database

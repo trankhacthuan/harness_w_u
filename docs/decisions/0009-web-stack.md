@@ -29,7 +29,7 @@ Default stack:
 | Database | PostgreSQL (`0011-postgresql-database.md`) |
 | Data access | Drizzle ORM + `pg`; SQL migrations in `db/migrations/` |
 | Unit / component tests | Vitest + Testing Library |
-| Integration tests | Vitest against a throwaway PostgreSQL instance |
+| Integration tests | Vitest against `TEST_DATABASE_URL` (a separate, disposable PostgreSQL database) |
 | End-to-end tests | Playwright |
 | Lint | ESLint (`next/core-web-vitals`) |
 | Formatting | Prettier |

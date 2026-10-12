@@ -19,9 +19,10 @@ out/
 coverage/
 playwright-report/
 test-results/
+# Secrets: ignore every env file; only .env.example (placeholders) is committed.
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 *.tsbuildinfo
 .pnpm-store/
 

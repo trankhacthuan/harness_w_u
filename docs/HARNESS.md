@@ -382,8 +382,9 @@ validate:quick   pnpm lint && pnpm typecheck && pnpm test
   Prettier check, ESLint (incl. jsx-a11y), tsc --noEmit, Vitest unit/component.
 
 test:integration pnpm db:migrate:test && pnpm test:integration
-  Apply every migration to an empty throwaway PostgreSQL, then run Vitest
-  integration tests against it. Mocks do not count as database proof.
+  Apply every migration to the empty database in TEST_DATABASE_URL (aborts if
+  it is unset or equals DATABASE_URL), then run Vitest integration tests
+  against it. Mocks do not count as database proof.
 
 test:e2e         pnpm test:e2e
   Playwright user flows + @axe-core/playwright accessibility assertions, at
