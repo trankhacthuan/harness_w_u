@@ -6,10 +6,6 @@
 *before* it edits code: what the product is, what to read first, how risky a
 change is, and what proof "done" requires. Brief, visual design, front end,
 back end, database, and validation all live in this one repository.
-
-Forked from [`hoangnb24/repository-harness`](https://github.com/hoangnb24/repository-harness)
-(MIT).
-
 ---
 
 ## Quick start — one line
